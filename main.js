@@ -19,6 +19,7 @@ app.use(express.static('public'));
 app.use(bodyParser.urlencoded({
   extended: false
 }));
+
 app.use(compression());
 app.use(session({
   secret: 'asadlfkj!@#!@#dfgasdg',
@@ -31,7 +32,21 @@ app.use(flash());
 var passport = require('./lib/passport')(app);
 
 
-app.get('/test',function(req,res){
+app.get('/main', function (request, response) {
+  
+  var obj = new Object();
+  obj.user = request.user;
+  obj.logged =!!request.session.logged 
+  if (request.user) {
+    timelineDb.find({ userOID: request.user.followUserList }, function (error, timeline) {
+      obj.timeline = timeline
+      response.send(obj);
+    })
+  }
+});
+
+
+app.get('/test', function (req, res) {
   res.send(`<html>
   <head>
       <meta charset="UTF-8">
@@ -47,42 +62,46 @@ app.get('/test',function(req,res){
   </body>
 </html>`);
 })
-
-app.get('/public/images/:filename',function(req,res){
+app.get('/public/images/:filename', function (req, res) {
 
   console.log(req.params.filename)
 
-  fs.readFile('./public/images/' + req.params.filename, function(error,data){
-    if(error)
-    {
+  fs.readFile('./public/images/' + req.params.filename, function (error, data) {
+    if (error) {
       console.log(error)
     }
-    else{
+    else {
       console.log(data)
-      res.writeHead(200, {'Content-Type': 'text/html'});
+      res.writeHead(200, { 'Content-Type': 'text/html' });
       res.end(data);
     }
   })
 })
 
+
+
+
 const uploader = multer({
 
   storage: multer.diskStorage({
 
-    destination(Req,file,cb){
-      cb(null,"public/images/");
+    destination(Req, file, cb) {
+      cb(null, "public/images/");
     },
-    filename(req,file,cb)
-    {
+    filename(req, file, cb) {
       const ext = path.extname(file.originalname);
-      cb(null, path.basename(file.originalname, ext) + new Date().valueOf() + ext );
+
+      console.log('테스트 +    ' + ext)
+      cb(null, path.basename(file.originalname, ext) + new Date().valueOf() + ext);
     }
   })
 
-  ,limits :{ filesize: 10 * 1024 * 1024}
+  , limits: { filesize: 10 * 1024 * 1024 }
 })
 
-app.post('/images', uploader.single('img'), function(req,res,next){
+app.post('/images', uploader.single('img'), function (req, res, next) {
+  console.log('test');
+  console.log(req.file);
   res.json(req.body);
 })
 
@@ -103,8 +122,8 @@ var authRouter = require('./routes/auth')(passport);
 var timeRouter = require('./routes/timeline');
 app.use('/project', projectRouter);
 app.use('/auth', authRouter);
-app.use('/user',userRouter);
-app.use('/timeline',timeRouter);
+app.use('/user', userRouter);
+app.use('/timeline', timeRouter);
 
 app.use(function (err, req, res, next) {
   console.log(err)
@@ -118,6 +137,6 @@ app.use(function (err, req, res, next) {
 });
 
 
-app.listen(3000, function () {
-  console.log('Example app listening on port 3000!')
+app.listen(4000, function () {
+  console.log('Example app listening on port 4000!')
 });

@@ -15,7 +15,9 @@ router.get('', function (request, response, next) {
   var pid;
   var Obj = new Object();
   Obj.flag = "fail"
-
+  console.log('getProjectList');
+  console.log(request.query);
+  
   if(request.query.pageId)
     pid=request.query.pageId;
   else
@@ -28,38 +30,86 @@ router.get('', function (request, response, next) {
       }
     )
   }
-
+  /**
+   * order
+   * undefined , 0 : 전체보기 '-projectId'
+   * 1 : 마감순  'dueDate'
+   * 2 : 높은가격 '-price'
+   * 3 : 낮은가격 'price'
+   */
   var size;
   if(request.query.size)
     size = request.query.size;
   else
     size = 10; 
-  
+  let sortText; 
+  switch(request.query.order){
+    case 'undefined':
+    case '0':
+        sortText = '-projectId'
+        break;
+    case '1':
+        sortText = 'dueDate'
+        break;
+    case '2':
+        sortText = '-price'
+        break;
+    case '3':
+        sortText='price'
+  }
+  const cat =request.query.cat;
+  const text = request.query.text;
   var startProId = ((Number(pid) -1) * Number(size))
 
-  projectDb.find({dueDate: { '$lt' : Date.now()}}, function (error, project) { // test때는 $lt 아닐때는 gte
-    if(error)
-    {
-      console.log(error)
-    }
-    else{
-      if(project)
+  if(text != 'null' && text != 'undefined'){
+    const query = new RegExp(request.query.text);
+    //dueDate: { '$gte' : Date.now()
+    projectDb.find({}, function (error, project) { // test때는 $lt 아닐때는 gte
+      if(error)
       {
-        Obj.flag="success"
-        Obj.project = project
-        return response.send(Obj)
+        console.log(error)
       }
-      else
+      else{
+        if(project)
+        {
+          Obj.flag="success"
+          Obj.project = project
+          return response.send(Obj)
+        }
+        else
+        {
+          console.log('projects find error!')
+          return response.send(Obj);
+        }
+      }
+    })
+    .sort(sortText).skip(startProId).limit(Number(size))
+    .where(cat).regex(query)
+  }
+  else{
+    projectDb.find({}, function (error, project) { // test때는 $lt 아닐때는 gte
+      if(error)
       {
-        console.log('projects find error!')
-        return response.send(Obj);
+        console.log(error)
       }
-    }
-  }).sort({projectId : 'desc'}).skip(startProId).limit(Number(size))
-
- 
-
-  
+      else{
+        if(project)
+        {
+          Obj.flag="success"
+          Obj.project = project
+          console.log(Obj.project);
+          
+          return response.send(Obj)
+        }
+        else
+        {
+          console.log('projects find error!')
+          return response.send(Obj);
+        }
+      }
+    })
+    .sort(sortText).skip(startProId).limit(Number(size))
+  }
 });
 
 
@@ -72,11 +122,15 @@ router.post('', function (request, response) {
     return response.send(Obj)
   }
   var post = request.body
+  console.log("+++++++++++++++++");
+  console.log("저장될 데이터");
+  console.log(post);
+  console.log("+++++++++++++++++");
+  
   var projectId = 0
 
 
-  countDb.findById( {_id: "5d874a4a6f3cd55ec4b0159e"}, function (error, data) {
-
+  countDb.findById( {_id: "5db17c79d0ef0f8f884a5bd0"}, async function (error, data) {
     if (error) {
       console.log(error);
     } else {
@@ -85,16 +139,19 @@ router.post('', function (request, response) {
         projectId: data.count,
         userId: request.user.userId,
         nickname: request.user.nickname,
-        organization: post.organization,
+        //organization: post.organization,
+        organization: request.user.organization,
+
         title: post.title,
         price: post.price,
         period: post.period,
         description: post.description,
         maxPeople: post.maxPeople,
+        dueDate: post.dueDate,
         categoryList : post.categoryList
       })
     
-      project.save(function (error, data) {
+      await project.save(function (error, data) {
         if (error) {
           console.log(error);
           console.log('unSaved!')
@@ -133,6 +190,7 @@ router.post('', function (request, response) {
     }
   });
 });
+
 router.get('/:projectOId', function (request, response) {
   
   var Obj = new Object();

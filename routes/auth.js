@@ -10,6 +10,7 @@ var bcrypt = require('bcrypt');
 var mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost:27017/testDB',{ useNewUrlParser: true });
 var db = mongoose.connection;
+
 db.on('error', function(){
     console.log('Connection Failed!');
 });
@@ -24,16 +25,18 @@ module.exports = function (passport) {
       failureRedirect: '/auth/login',
       failureFlash: true,
     }),function(req,res){
+      console.log('login');
+      req.session.logged = true;
       var Obj = new Object();
       Obj.flag="success"
       Obj.user = req.user
       res.send(Obj)
     });
-
+  
   router.get('/logout', function (request, response) {
     request.logout();
     request.session.save(function () {
-      response.redirect('/zz');
+      response.redirect('/');
     });
   });
 

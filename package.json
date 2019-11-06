@@ -7,7 +7,8 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon main.js"
   },
   "repository": {
     "type": "git",
@@ -30,7 +31,7 @@
     "lowdb": "^1.0.0",
     "mongoose": "^5.6.9",
     "multer": "^1.4.2",
-    "nodemailer": "^6.3.1",
+    "nodemon": "^1.19.4",
     "passport": "^0.4.0",
     "passport-kakao": "0.0.5",
     "passport-local": "^1.0.0",
