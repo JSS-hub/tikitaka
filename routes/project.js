@@ -11,7 +11,7 @@ var countDb = require('../lib/countdb')
 var shortid = require('shortid');
 
 
-router.get('', function (request, response, next) {
+router.get('',  async function (request, response, next) {
   var pid;
   var Obj = new Object();
   Obj.flag = "fail"
@@ -38,6 +38,7 @@ router.get('', function (request, response, next) {
    * 3 : 낮은가격 'price'
    */
   var size;
+  
   if(request.query.size)
     size = request.query.size;
   else
@@ -58,13 +59,13 @@ router.get('', function (request, response, next) {
         sortText='price'
   }
   const cat =request.query.cat;
-  const text = request.query.text;
+  const {text} = request.query;
   var startProId = ((Number(pid) -1) * Number(size))
 
   if(text != 'null' && text != 'undefined'){
-    const query = new RegExp(request.query.text);
-    //dueDate: { '$gte' : Date.now()
-    projectDb.find({}, function (error, project) { // test때는 $lt 아닐때는 gte
+    var query = new RegExp(text);
+    //dueDate: { '$gte' : Date.now()}
+    projectDb.find({dueDate: { '$gte' : Date.now()}}, async function (error, project) { // test때는 $lt 아닐때는 gte
       if(error)
       {
         console.log(error)
@@ -74,6 +75,8 @@ router.get('', function (request, response, next) {
         {
           Obj.flag="success"
           Obj.project = project
+          const counts = await projectDb.find({dueDate: { '$gte' : Date.now()}}).where(cat).regex(query).countDocuments().exec()
+          Obj.lastPage = Math.ceil(counts/ size)
           return response.send(Obj)
         }
         else
@@ -87,7 +90,7 @@ router.get('', function (request, response, next) {
     .where(cat).regex(query)
   }
   else{
-    projectDb.find({}, function (error, project) { // test때는 $lt 아닐때는 gte
+    projectDb.find({dueDate: { '$gte' : Date.now()}}, async function (error, project) { // test때는 $lt 아닐때는 gte
       if(error)
       {
         console.log(error)
@@ -97,8 +100,8 @@ router.get('', function (request, response, next) {
         {
           Obj.flag="success"
           Obj.project = project
-          console.log(Obj.project);
-          
+          const counts = await projectDb.find({dueDate: { '$gte' : Date.now()}}).countDocuments().exec()
+          Obj.lastPage = Math.ceil(counts/ size)
           return response.send(Obj)
         }
         else
@@ -192,16 +195,19 @@ router.post('', function (request, response) {
 });
 
 router.get('/:projectOId', function (request, response) {
+  console.log('project post');
   
   var Obj = new Object();
   Obj.flag = "fail"
   
-  if (!auth.isOwner(request, response)) {
-    return response.send(Obj)
-  }
+  // if (!auth.isOwner(request, response)) {
+  //   return response.send(Obj)
+  // }
 
-  var post = request.body;
+  //var post = request.body;
   var OId = request.params.projectOId;
+  console.log(OId);
+  
   projectDb.findOne({ _id: OId }, function (error, project) {
 
     if(error)
@@ -210,6 +216,8 @@ router.get('/:projectOId', function (request, response) {
       return response.send(Obj)
     }
     else{
+      console.log(project);
+      
       Obj.project = project
       Obj.flag="success"
       return response.send(Obj)
@@ -227,7 +235,7 @@ router.put('/:projectOId', function (request, response) {
     return response.send(Obj)
   }
 
-  var post = request.body;
+  var post = request.body.post;
   var OId = request.params.projectOId;
 
   projectDb.findOne({ _id: OId }, function (error, project) {
@@ -241,26 +249,47 @@ router.put('/:projectOId', function (request, response) {
         userDb.findOne( { id: request.session.passport.user} , function(error, user)
         {
             console.log('enter')
-            project.candiList.push(user._id)
-            project.save()
+            let chk = project.candiList.find(i =>{
+              return user._id.equals(i)
+            })
+            let chk2 = project.freeList.find(i =>{
+              return user._id.equals(i)
+            })
+            if(chk !==undefined || chk2 !=undefined){
+              Obj.message='이미 신청한 프로젝트 입니다.'
+            }
+            else{
+              Obj.message='신청되었습니다.'
+              project.candiList.push(user._id)
+              project.save()
+            }
+            Obj.flag="success"
+            return response.send(Obj) 
         })
       }
-      else if(request.query.flag == 2)
+      else if(request.query.flag == 2) //신청 받아주는것
       {
         if (project.userId !== request.user.userId) {
           return response.send(Obj)
         }
         userDb.findOne({ _id : request.query.userOId }, function(error, user)
         {
+          console.log('here?');
+          
             project.candiList.pop(user._id)
             project.freeList.push(user._id)
             project.save()
             user.proList.push(project._id)
             user.save()
+            Obj.flag="success"
+            return response.send(Obj) 
         })
       }
-      else if(request.query.flag == 3)
+      else if(request.query.flag == 3) //신청 취소?
       {
+        if (project.userId !== request.user.userId) {
+          return response.send(Obj)
+        }
         userDb.findOne({ _id : request.query.userOId}, function(error, user)
         {
           project.candiList.pop(user._id)
@@ -268,6 +297,8 @@ router.put('/:projectOId', function (request, response) {
           project.save()
           user.proList.pop(project._id)
           user.save()
+          Obj.flag="success"
+            return response.send(Obj) 
         })
       }
       else{
@@ -276,7 +307,7 @@ router.put('/:projectOId', function (request, response) {
           
           return response.send(Obj)
         }
-
+        
         if(post.projectId)
           project.projectId = post.projectId
         if(post.userId)
@@ -303,14 +334,16 @@ router.put('/:projectOId', function (request, response) {
             console.log('unSaved!')
           } else {
             console.log('Saved!')
+            Obj.flag="success"
+            return response.send(Obj) 
           }
         })
       }
     }
   })
-  Obj.flag="success"
-  return response.send(Obj)
-
+  
+ /*  Obj.flag="success"
+  return response.send(Obj)  */
 });
 
 
