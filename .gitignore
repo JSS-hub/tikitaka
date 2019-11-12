@@ -1,7 +1,7 @@
 node_modules/
 sessions
 nodejs/sessions
-lib/.my_key
+lib/.my_key.js
 db.json
 .gitignore
 password.js
