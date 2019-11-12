@@ -207,8 +207,8 @@ router.put('/:uid', function (request, response) {
           console.log('==================');
         
         if (request.query.freeflag) {
-          user.freeflag = request.query.freeflag
-          if (user.freeflag == 1) {
+          //user.freeflag = request.query.freeflag
+          if (user.freeflag == 0) {
             if (post.intro)
               user.intro = post.intro
             if (post.grade)
