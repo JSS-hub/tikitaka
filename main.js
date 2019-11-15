@@ -33,16 +33,21 @@ var passport = require('./lib/passport')(app);
 
 
 app.get('/main', function (request, response) {
-  
   var obj = new Object();
   obj.user = request.user;
   obj.logged =!!request.session.logged 
+
   if (request.user) {
     timelineDb.find({ userOID: request.user.followUserList }, function (error, timeline) {
       obj.timeline = timeline
-      response.send(obj);
+      return response.send(obj);
+
     })
+  }else{
+
+    return response.send(obj);
   }
+
 });
 
 
@@ -68,7 +73,11 @@ app.get('/public/images/:filename', function (req, res) {
 
   fs.readFile('./public/images/' + req.params.filename, function (error, data) {
     if (error) {
-      console.log(error)
+      fs.readFile('./public/images/프로필.png', function (error, other) {
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(other)
+        console.log(error)
+      })
     }
     else {
       console.log(data)
@@ -90,9 +99,10 @@ const uploader = multer({
     },
     filename(req, file, cb) {
       const ext = path.extname(file.originalname);
-
+      req.user.userId
       console.log('테스트 +    ' + ext)
-      cb(null, path.basename(file.originalname, ext) + new Date().valueOf() + ext);
+      //cb(null, path.basename(file.originalname, ext) + new Date().valueOf() + ext);
+      cb(null, req.user.userId+ext);
     }
   })
 
@@ -104,16 +114,6 @@ app.post('/images', uploader.single('img'), function (req, res, next) {
   console.log(req.file);
   res.json(req.body);
 })
-
-
-
-
-
-
-
-
-
-
 
 
 var projectRouter = require('./routes/project');

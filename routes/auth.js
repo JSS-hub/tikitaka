@@ -34,10 +34,17 @@ module.exports = function (passport) {
     });
   
   router.get('/logout', function (request, response) {
-    request.logout();
-    request.session.save(function () {
-      response.redirect('/');
-    });
+    //request.logout();
+//    delete request.session.logged
+request.session.destroy(function(){ 
+  request.session;
+  });
+  
+  return response.send()
+//    request.session.destory(); 
+    // request.session.save(function () {
+    //   response.redirect('/');
+    // });
   });
 
   return router;

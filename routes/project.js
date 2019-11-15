@@ -144,7 +144,6 @@ router.post('', function (request, response) {
         nickname: request.user.nickname,
         //organization: post.organization,
         organization: request.user.organization,
-
         title: post.title,
         price: post.price,
         period: post.period,

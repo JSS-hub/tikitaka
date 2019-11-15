@@ -9,7 +9,6 @@ var projectDb = require('../lib/projectdb');
 var shortid = require('shortid');
 var bcrypt = require('bcrypt');
 
-
 /**
  * 프리랜서 목록 불러옴
  * Method: GET
@@ -122,13 +121,10 @@ router.put('/update_pass', function (request, response) {
 
   console.log('test')
   var post = request.body;
-  console.log(post);
   
   var pre_pwd = post.pre_password;
   var pwd = post.password;
   var id = request.session.passport.user;
-  console.log(pre_pwd)
-  console.log(pwd)
 
   if (!auth.isOwner(request, response)) {
     response.redirect('/');
@@ -180,14 +176,19 @@ router.put('/:uid', function (request, response) {
   }
 
   var post = request.body;
+  console.log(request.params.uid);
+  console.log(request.user._id);
   
   if (request.user._id != request.params.uid)
     return response.send(Obj)
-
+  console.log('hi');
+  
   userDb.findOne({ _id: request.user._id }, function (error, user) {
     if (error)
       return response.send(Obj)
     else {
+      console.log(user);
+      
       if (user) {
         if (post.userId)
           user.userId = post.userId
@@ -199,16 +200,9 @@ router.put('/:uid', function (request, response) {
           user.location = post.location
         if (post.organization)
           user.organization = post.organization
-          console.log('==================');
-          
-          console.log(post);
-          
-          console.log(post.careerList);
-          console.log('==================');
         
         if (request.query.freeflag) {
-          //user.freeflag = request.query.freeflag
-          if (user.freeflag == 0) {
+          user.freeflag = request.query.freeflag
             if (post.intro)
               user.intro = post.intro
             if (post.grade)
@@ -221,7 +215,6 @@ router.put('/:uid', function (request, response) {
               user.categoryList = post.categoryList
             if (post.careerList)
               user.careerList = post.careerList
-          }
         }
 
         //비밀번호 추가
@@ -247,6 +240,8 @@ router.put('/:uid', function (request, response) {
                 user.save()
                 data.save()
                 Obj.flag = "success"
+                console.log('팔로우 추가!');
+                
                 return response.send(Obj)
               }
             })
