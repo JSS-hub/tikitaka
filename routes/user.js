@@ -16,7 +16,7 @@ var bcrypt = require('bcrypt');
  */
 router.get('', async function (request, response, next) {
   console.log('프리랜서 목록조회');
-  var pid;
+  let pid;
   var Obj = new Object();
   Obj.flag = "fail"
   if (request.query.pageId){
