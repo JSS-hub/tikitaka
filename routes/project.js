@@ -15,8 +15,8 @@ router.get('',  async function (request, response, next) {
   var pid;
   var Obj = new Object();
   Obj.flag = "fail"
-  console.log('getProjectList');
-  console.log(request.query);
+  // console.log('getProjectList');
+  // console.log(request.query);
   
   if(request.query.pageId)
     pid=request.query.pageId;
@@ -125,10 +125,10 @@ router.post('', function (request, response) {
     return response.send(Obj)
   }
   var post = request.body
-  console.log("+++++++++++++++++");
-  console.log("저장될 데이터");
-  console.log(post);
-  console.log("+++++++++++++++++");
+  // console.log("+++++++++++++++++");
+  // console.log("저장될 데이터");
+  // console.log(post);
+  // console.log("+++++++++++++++++");
   
   var projectId = 0
 
@@ -254,6 +254,7 @@ router.put('/:projectOId', function (request, response) {
             let chk2 = project.freeList.find(i =>{
               return user._id.equals(i)
             })
+            
             if(chk !==undefined || chk2 !=undefined){
               Obj.message='이미 신청한 프로젝트 입니다.'
             }

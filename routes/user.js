@@ -19,41 +19,41 @@ router.get('', async function (request, response, next) {
   let pid;
   var Obj = new Object();
   Obj.flag = "fail"
-  if (request.query.pageId){
+  if (request.query.pageId) {
     pid = request.query.pageId;
     var size;
     if (request.query.size)
       size = request.query.size;
     else
       size = 10;
-    const {text,cat} = request.query
-    
+    const { text, cat } = request.query
+
     var startUserId = ((Number(pid) - 1) * Number(size))
-    let result 
-    if(text !='null' && text!='undefined'){
+    let result
+    if (text != 'null' && text != 'undefined') {
       const query = new RegExp(text);
-      try{
-        result = await userDb.find({freeflag: 0}).sort().skip(startUserId).limit(Number(size)).where(cat).regex(query)
+      try {
+        result = await userDb.find({ freeflag: 0 }).sort().skip(startUserId).limit(Number(size)).where(cat).regex(query)
         const counts = await userDb.find({ freeflag: 0 }).where(cat).regex(query).countDocuments();
-        Obj.lastPage = Math.ceil(counts/size);
+        Obj.lastPage = Math.ceil(counts / size);
         Obj.flag = "success"
         Obj.user = result
       }
-      catch(e){
+      catch (e) {
         console.log(e);
       }
     }
-    else{
-      try{
+    else {
+      try {
         result = await userDb.find({ freeflag: 0 }).sort().skip(startUserId).limit(Number(size));
         const counts = await userDb.find({ freeflag: 0 }).countDocuments();
-        Obj.lastPage = Math.ceil(counts/size);
+        Obj.lastPage = Math.ceil(counts / size);
         Obj.flag = "success"
         Obj.user = result
       }
-      catch(e){
+      catch (e) {
         console.log(e);
-        
+
       }
     }
     return response.send(Obj)
@@ -79,7 +79,9 @@ router.get('', async function (request, response, next) {
 //   }}
 // ])
 
+
 router.post('', function (request, response) {
+
   var post = request.body;
   var pwd = post.password;
   var Obj = new Object();
@@ -87,8 +89,8 @@ router.post('', function (request, response) {
 
   bcrypt.hash(pwd, 10, function (err, hash) {
 
-    //var post = request.body;
-    //console.log(post)
+    var post = request.body;
+    console.log(post)
 
     var user = new userDb({
       id: shortid.generate(),
@@ -98,7 +100,8 @@ router.post('', function (request, response) {
       nickname: post.nickname,
       location: post.location,
       organization: post.organization,
-      freeflag: "0"
+      freeflag: "0",
+      verification: 0
     })
 
     user.save(function (error, data) {
@@ -107,21 +110,39 @@ router.post('', function (request, response) {
         return response.send(Obj)
       } else {
         Obj.flag = "success"
-        console.log(Obj);
-        
-        return response.send(Obj)
+        let transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: key.user,  // gmail 계정 아이디를 입력
+            pass: key.pass   // gmail 계정의 비밀번호를 입력
+          }
+        });
+        let mailOptions = {
+          from: key.user,    // 발송 메일 주소 (위에서 작성한 gmail 계정 아이디)
+          to: post.userId,                     // 수신 메일 주소
+          subject: '[tikitaka] 본인 확인 메일입니다.',   // 제목
+          html: '<p>아래의 링크를 클릭해주세요 !</p>' +
+            "<a href=" + 'http://' + key.ip + ':3000/user?useroid=' + data._id + '&verification=1' + ">인증하기</a>"
+        };
+
+        transporter.sendMail(mailOptions, function (error, info) {
+          if (error) {
+            console.log(error);
+          }
+          else {
+            console.log('Email sent: ' + info.response);
+            return response.send(Obj)
+          }
+        });
       }
     })
   });
 })
 
-
-
 router.put('/update_pass', function (request, response) {
 
-  console.log('test')
   var post = request.body;
-  
+
   var pre_pwd = post.pre_password;
   var pwd = post.password;
   var id = request.session.passport.user;
@@ -130,7 +151,6 @@ router.put('/update_pass', function (request, response) {
     response.redirect('/');
     return false;
   }
-  //"password" : "$2b$10$IF7sZyX6ahmfuqCNtOJFVOhsz1aQPWk8/vSa5PK9E66iz3CIYKsX6",
   bcrypt.hash(pwd, 10, function (err, hash) {
     userDb.findOne({ id: id }, function (error, user) {
       if (user.userId !== request.user.userId) {
@@ -148,15 +168,15 @@ router.put('/update_pass', function (request, response) {
             } else {
               console.log('Saved!')
               return response.json({
-                message:"변경되었습니다."
+                message: "변경되었습니다."
               });
             }
           })
         }
-        else{
-          
+        else {
+
           return response.json({
-            message:"기존비밀번호가 알맞지 않습니다."
+            message: "기존비밀번호가 알맞지 않습니다."
           });
         }
       }));
@@ -178,17 +198,17 @@ router.put('/:uid', function (request, response) {
   var post = request.body;
   console.log(request.params.uid);
   console.log(request.user._id);
-  
+
   if (request.user._id != request.params.uid)
     return response.send(Obj)
   console.log('hi');
-  
+
   userDb.findOne({ _id: request.user._id }, function (error, user) {
     if (error)
       return response.send(Obj)
     else {
       console.log(user);
-      
+
       if (user) {
         if (post.userId)
           user.userId = post.userId
@@ -200,22 +220,23 @@ router.put('/:uid', function (request, response) {
           user.location = post.location
         if (post.organization)
           user.organization = post.organization
-        
+
         if (request.query.freeflag) {
           user.freeflag = request.query.freeflag
-            if (post.intro)
-              user.intro = post.intro
-            if (post.grade)
-              user.grade = post.grade
-            if (post.educationList)
-              user.educationList = post.educationList
-            if (post.lisenceList)
-              user.lisenceList = post.lisenceList
-            if (post.categoryList)
-              user.categoryList = post.categoryList
-            if (post.careerList)
-              user.careerList = post.careerList
         }
+          if (post.intro)
+            user.intro = post.intro
+          if (post.grade)
+            user.grade = post.grade
+          if (post.educationList)
+            user.educationList = post.educationList
+          if (post.lisenceList)
+            user.lisenceList = post.lisenceList
+          if (post.categoryList)
+            user.categoryList = post.categoryList
+          if (post.careerList)
+            user.careerList = post.careerList
+        
 
         //비밀번호 추가
 
@@ -241,7 +262,7 @@ router.put('/:uid', function (request, response) {
                 data.save()
                 Obj.flag = "success"
                 console.log('팔로우 추가!');
-                
+
                 return response.send(Obj)
               }
             })
