@@ -61,10 +61,8 @@ router.get('',  async function (request, response, next) {
   const cat =request.query.cat;
   const {text} = request.query;
   var startProId = ((Number(pid) -1) * Number(size))
-  console.log('text',text);
-  console.log('text',text == 'undefined');
-  
-  if(text != 'null' && text != 'undefined' && text != undefined &&text != null){
+
+  if(text != 'null' && text != 'undefined'){
     var query = new RegExp(text);
     //dueDate: { '$gte' : Date.now()}
     projectDb.find({dueDate: { '$gte' : Date.now()}}, async function (error, project) { // test때는 $lt 아닐때는 gte

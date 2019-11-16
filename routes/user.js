@@ -33,8 +33,8 @@ router.get('', async function (request, response, next) {
     if(text !='null' && text!='undefined'){
       const query = new RegExp(text);
       try{
-        result = await userDb.find({freeflag: 1}).sort().skip(startUserId).limit(Number(size)).where(cat).regex(query)
-        const counts = await userDb.find({ freeflag: 1 }).where(cat).regex(query).countDocuments();
+        result = await userDb.find({freeflag: 0}).sort().skip(startUserId).limit(Number(size)).where(cat).regex(query)
+        const counts = await userDb.find({ freeflag: 0 }).where(cat).regex(query).countDocuments();
         Obj.lastPage = Math.ceil(counts/size);
         Obj.flag = "success"
         Obj.user = result
@@ -45,8 +45,8 @@ router.get('', async function (request, response, next) {
     }
     else{
       try{
-        result = await userDb.find({ freeflag: 1 }).sort().skip(startUserId).limit(Number(size));
-        const counts = await userDb.find({ freeflag: 1 }).countDocuments();
+        result = await userDb.find({ freeflag: 0 }).sort().skip(startUserId).limit(Number(size));
+        const counts = await userDb.find({ freeflag: 0 }).countDocuments();
         Obj.lastPage = Math.ceil(counts/size);
         Obj.flag = "success"
         Obj.user = result
@@ -187,6 +187,8 @@ router.put('/:uid', function (request, response) {
     if (error)
       return response.send(Obj)
     else {
+      console.log(user);
+      
       if (user) {
         if (post.userId)
           user.userId = post.userId
@@ -325,5 +327,11 @@ router.get('/:uid', function (request, response) {
     }
   });
 });
+
+
+
+
+
+
 
 module.exports = router;
