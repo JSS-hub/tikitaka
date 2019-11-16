@@ -1,3 +1,4 @@
+
 var express = require('express');
 var router = express.Router();
 var path = require('path');
@@ -8,6 +9,8 @@ var userDb = require('../lib/userdb');
 var projectDb = require('../lib/projectdb');
 var shortid = require('shortid');
 var bcrypt = require('bcrypt');
+var nodemailer = require('nodemailer');
+var key = require('../lib/.my_key')
 
 /**
  * 프리랜서 목록 불러옴
@@ -19,6 +22,14 @@ router.get('', async function (request, response, next) {
   let pid;
   var Obj = new Object();
   Obj.flag = "fail"
+  if(request.query.verification)
+  {
+      userDb.findOne({_id : request.query.useroid},function(error, user){
+        user.verification = request.query.verification;
+        user.save().then(response.redirect('/'))
+      })
+  }
+  
   if (request.query.pageId) {
     pid = request.query.pageId;
     var size;
@@ -122,7 +133,7 @@ router.post('', function (request, response) {
           to: post.userId,                     // 수신 메일 주소
           subject: '[tikitaka] 본인 확인 메일입니다.',   // 제목
           html: '<p>아래의 링크를 클릭해주세요 !</p>' +
-            "<a href=" + 'http://' + key.ip + ':3000/user?useroid=' + data._id + '&verification=1' + ">인증하기</a>"
+            "<a href=" + 'http://' + key.ip + ':4000/user?useroid=' + data._id + '&verification=1' + ">인증하기</a>"
         };
 
         transporter.sendMail(mailOptions, function (error, info) {
@@ -224,19 +235,19 @@ router.put('/:uid', function (request, response) {
         if (request.query.freeflag) {
           user.freeflag = request.query.freeflag
         }
-          if (post.intro)
-            user.intro = post.intro
-          if (post.grade)
-            user.grade = post.grade
-          if (post.educationList)
-            user.educationList = post.educationList
-          if (post.lisenceList)
-            user.lisenceList = post.lisenceList
-          if (post.categoryList)
-            user.categoryList = post.categoryList
-          if (post.careerList)
-            user.careerList = post.careerList
-        
+        if (post.intro)
+          user.intro = post.intro
+        if (post.grade)
+          user.grade = post.grade
+        if (post.educationList)
+          user.educationList = post.educationList
+        if (post.lisenceList)
+          user.lisenceList = post.lisenceList
+        if (post.categoryList)
+          user.categoryList = post.categoryList
+        if (post.careerList)
+          user.careerList = post.careerList
+
 
         //비밀번호 추가
 

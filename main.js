@@ -14,6 +14,7 @@ var timelineDb = require('./lib/timelinedb');
 var multer = require('multer');
 var path = require('path');
 
+
 app.use(bodyParser.json());
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({
@@ -30,7 +31,6 @@ app.use(session({
 app.use(flash());
 
 var passport = require('./lib/passport')(app);
-
 
 app.get('/main', function (request, response) {
   var obj = new Object();
@@ -113,6 +113,14 @@ app.post('/images', uploader.single('img'), function (req, res, next) {
   console.log('test');
   console.log(req.file);
   res.json(req.body);
+})
+
+app.get('/fail', function (req, res) {
+  console.log(req)
+  res.json({
+    message:-1
+  })
+
 })
 
 

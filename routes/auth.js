@@ -19,10 +19,10 @@ db.once('open', function () {
 });
 
 
-module.exports = function (passport) {
+module.exports = function (passport,request) {
   router.post('/login_process',
     passport.authenticate('local', {
-      failureRedirect: '/auth/login',
+      failureRedirect: '/fail',
       failureFlash: true,
     }), function (req, res) {
       console.log('login');
@@ -32,7 +32,7 @@ module.exports = function (passport) {
       Obj.user = req.user
       res.send(Obj)
     });
-
+    
   router.get('/logout', function (request, response) {
     //request.logout();
     //    delete request.session.logged
