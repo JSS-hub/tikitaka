@@ -65,7 +65,7 @@ router.get('',  async function (request, response, next) {
   if(text != 'null' && text != 'undefined'){
     var query = new RegExp(text);
     //dueDate: { '$gte' : Date.now()}
-    projectDb.find({dueDate: { '$lt' : Date.now()}}, async function (error, project) { // test때는 $lt 아닐때는 gte
+    projectDb.find({dueDate: { '$gte' : Date.now()}}, async function (error, project) { // test때는 $lt 아닐때는 gte
       if(error)
       {
         console.log(error)
@@ -75,7 +75,7 @@ router.get('',  async function (request, response, next) {
         {
           Obj.flag="success"
           Obj.project = project
-          const counts = await projectDb.find({dueDate: { '$lt' : Date.now()}}).where(cat).regex(query).countDocuments().exec()
+          const counts = await projectDb.find({dueDate: { '$gte' : Date.now()}}).where(cat).regex(query).countDocuments().exec()
           Obj.lastPage = Math.ceil(counts/ size)
           return response.send(Obj)
         }
@@ -100,8 +100,14 @@ router.get('',  async function (request, response, next) {
         {
           Obj.flag="success"
           Obj.project = project
-          const counts = await projectDb.find({dueDate: { '$lt' : Date.now()}}).countDocuments().exec()
+          const counts = await projectDb.find({dueDate: { '$gte' : Date.now()}}).countDocuments().exec()
           Obj.lastPage = Math.ceil(counts/ size)
+          console.log('000000000000000000000000000');
+          
+          console.log(counts);
+          
+          console.log(Obj.lastPage);
+          
           return response.send(Obj)
         }
         else
