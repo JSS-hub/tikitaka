@@ -143,6 +143,8 @@ router.post('', function (request, response) {
     if (error) {
       console.log(error);
     } else {
+      let userOid = request.user._id;
+
       var project = new projectDb({
         id : request.user.id,
         projectId: data.count,
@@ -151,6 +153,7 @@ router.post('', function (request, response) {
         //organization: post.organization,
         organization: request.user.organization,
         title: post.title,
+        freeList: [userOid],
         price: post.price,
         period: post.period,
         description: post.description,
@@ -173,7 +176,6 @@ router.post('', function (request, response) {
     
       projectDb.findOne({projectId : data.count},function(error,project)
       {
-        console.log(project._id);
         userDb.findOne({userId: request.user.userId},function(err,user){
           if(err){
             console.log(err);
@@ -187,6 +189,7 @@ router.post('', function (request, response) {
         var timeline = new timelineDb({
           writer: request.user.nickname,
           projectOID : project._id,
+          userId:request.user.userId,
           userOID : request.user._id,
           description: post.description
         })
@@ -232,8 +235,6 @@ router.get('/:projectOId', function (request, response) {
       return response.send(Obj)
     }
     else{
-      console.log(project);
-      
       Obj.project = project
       Obj.flag="success"
       return response.send(Obj)
@@ -291,7 +292,6 @@ router.put('/:projectOId', function (request, response) {
         }
         userDb.findOne({ _id : request.query.userOId }, function(error, user)
         {
-          console.log('here?');
           
             project.candiList.pop(user._id)
             project.freeList.push(user._id)

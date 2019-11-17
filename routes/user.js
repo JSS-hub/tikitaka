@@ -101,8 +101,6 @@ router.post('', function (request, response) {
   bcrypt.hash(pwd, 10, function (err, hash) {
 
     var post = request.body;
-    console.log(post)
-
     var user = new userDb({
       id: shortid.generate(),
       userId: post.userId,
@@ -207,19 +205,15 @@ router.put('/:uid', function (request, response) {
   }
 
   var post = request.body;
-  console.log(request.params.uid);
-  console.log(request.user._id);
 
   if (request.user._id != request.params.uid)
     return response.send(Obj)
-  console.log('hi');
 
   userDb.findOne({ _id: request.user._id }, function (error, user) {
     if (error)
       return response.send(Obj)
     else {
-      console.log(user);
-
+  
       if (user) {
         if (post.userId)
           user.userId = post.userId
@@ -307,6 +301,8 @@ router.put('/:uid', function (request, response) {
             if (error) {
               return response.send(Obj)
             } else {
+              console.log(data);
+              
               Obj.flag = "success"
               return response.send(Obj)
             }
@@ -349,7 +345,6 @@ router.get('/:uid', function (request, response) {
   var freeflag = "0";
   if (request.query.freeflag)
     freeflag = request.query.freeflag;
-    console.log(request.params.uid);
     
   userDb.findOne({ _id: request.params.uid, freeflag: freeflag }, function (error, user) {
     if (error)

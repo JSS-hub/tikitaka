@@ -36,8 +36,6 @@ app.get('/main', function (request, response) {
   var obj = new Object();
   obj.user = request.user;
   obj.logged =!!request.session.logged 
-  console.log(obj.logged);
-  
   if (request.user) {
     timelineDb.find({ userOID: request.user.followUserList }, function (error, timeline) {
       obj.timeline = timeline
@@ -70,7 +68,7 @@ app.get('/test', function (req, res) {
 })
 app.get('/public/images/:filename', function (req, res) {
 
-  console.log(req.params.filename)
+  // console.log(req.params.filename)
 
   fs.readFile('./public/images/' + req.params.filename, function (error, data) {
     if (error) {
@@ -81,7 +79,7 @@ app.get('/public/images/:filename', function (req, res) {
       })
     }
     else {
-      console.log(data)
+      // console.log(data)
       res.writeHead(200, { 'Content-Type': 'text/html' });
       res.end(data);
     }
@@ -117,14 +115,10 @@ app.post('/images', uploader.single('img'), function (req, res, next) {
 })
 
 app.get('/fail', function (req, res) {
-  
   let feedback = req.flash()
-  console.log(feedback);
-  
   res.json({
     message:feedback.error
   })
-
 })
 
 

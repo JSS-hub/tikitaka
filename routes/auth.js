@@ -25,11 +25,11 @@ module.exports = function (passport,request) {
       failureRedirect: '/fail',
       failureFlash: true,
     }), function (req, res) {
-      console.log('login');
       req.session.logged = true;
       var Obj = new Object();
       Obj.flag = "success"
       Obj.user = req.user
+      console.log('login');
       res.send(Obj)
     });
     
