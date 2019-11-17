@@ -9,7 +9,7 @@ var timelineDb = require('../lib/timelinedb');
 var userDb = require('../lib/userdb');
 var countDb = require('../lib/countdb')
 var shortid = require('shortid');
-
+var mongoose =require('mongoose')
 
 router.get('',  async function (request, response, next) {
   var pid;
@@ -168,7 +168,16 @@ router.post('', function (request, response) {
       projectDb.findOne({projectId : data.count},function(error,project)
       {
         console.log(project._id);
-        
+        userDb.findOne({userId: request.user.userId},function(err,user){
+          if(err){
+            console.log(err);
+            return response.send(Obj)
+          }
+          else{
+            user.proList.push(project._id);
+            user.save();
+          }
+        })
         var timeline = new timelineDb({
           writer: request.user.nickname,
           projectOID : project._id,
@@ -361,7 +370,20 @@ router.delete('/:projectOId', function (request, response) {
   var post = request.body;
   var OId = request.params.projectOId;
   projectDb.findOne({ _id: OId }, function (error, project) {
-    
+    userDb.find({}, function(err,user){
+      if(err){
+        console.log(err);
+        return response.send(Obj)
+      }
+      else{
+        for(let i  = 0 ; i < user.length; i ++){
+          user[i].proList.pop(OId)
+          user[i].save()
+        }
+        
+      }
+
+    }).where('proList').equals(mongoose.Types.ObjectId(OId))
     if(error)
     {
       console.log(error)
