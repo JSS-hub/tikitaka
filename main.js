@@ -36,7 +36,8 @@ app.get('/main', function (request, response) {
   var obj = new Object();
   obj.user = request.user;
   obj.logged =!!request.session.logged 
-
+  console.log(obj.logged);
+  
   if (request.user) {
     timelineDb.find({ userOID: request.user.followUserList }, function (error, timeline) {
       obj.timeline = timeline
@@ -116,9 +117,12 @@ app.post('/images', uploader.single('img'), function (req, res, next) {
 })
 
 app.get('/fail', function (req, res) {
-  console.log(req)
+  
+  let feedback = req.flash()
+  console.log(feedback);
+  
   res.json({
-    message:-1
+    message:feedback.error
   })
 
 })

@@ -26,7 +26,7 @@ router.get('', async function (request, response, next) {
   {
       userDb.findOne({_id : request.query.useroid},function(error, user){
         user.verification = request.query.verification;
-        user.save().then(response.redirect('/'))
+        user.save().then(response.redirect('http://119.18.120.225:3000/'))
       })
   }
   
@@ -44,8 +44,8 @@ router.get('', async function (request, response, next) {
     if (text != 'null' && text != 'undefined') {
       const query = new RegExp(text);
       try {
-        result = await userDb.find({ freeflag: 0 }).sort().skip(startUserId).limit(Number(size)).where(cat).regex(query)
-        const counts = await userDb.find({ freeflag: 0 }).where(cat).regex(query).countDocuments();
+        result = await userDb.find({ freeflag: 1 }).sort().skip(startUserId).limit(Number(size)).where(cat).regex(query)
+        const counts = await userDb.find({ freeflag: 1 }).where(cat).regex(query).countDocuments();
         Obj.lastPage = Math.ceil(counts / size);
         Obj.flag = "success"
         Obj.user = result
@@ -56,8 +56,8 @@ router.get('', async function (request, response, next) {
     }
     else {
       try {
-        result = await userDb.find({ freeflag: 0 }).sort().skip(startUserId).limit(Number(size));
-        const counts = await userDb.find({ freeflag: 0 }).countDocuments();
+        result = await userDb.find({ freeflag: 1 }).sort().skip(startUserId).limit(Number(size));
+        const counts = await userDb.find({ freeflag: 1 }).countDocuments();
         Obj.lastPage = Math.ceil(counts / size);
         Obj.flag = "success"
         Obj.user = result
@@ -349,12 +349,16 @@ router.get('/:uid', function (request, response) {
   var freeflag = "0";
   if (request.query.freeflag)
     freeflag = request.query.freeflag;
+    console.log(request.params.uid);
+    
   userDb.findOne({ _id: request.params.uid, freeflag: freeflag }, function (error, user) {
     if (error)
       return response.send(user)
     else {
       Obj.flag = "success"
       Obj.user = user
+      console.log(Obj);
+      
       return response.send(Obj)
     }
   });
