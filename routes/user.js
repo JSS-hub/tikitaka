@@ -22,14 +22,13 @@ router.get('', async function (request, response, next) {
   let pid;
   var Obj = new Object();
   Obj.flag = "fail"
-  if(request.query.verification)
-  {
-      userDb.findOne({_id : request.query.useroid},function(error, user){
-        user.verification = request.query.verification;
-        user.save().then(response.redirect('http://119.18.120.225:3000/'))
-      })
+  if (request.query.verification) {
+    userDb.findOne({ _id: request.query.useroid }, function (error, user) {
+      user.verification = request.query.verification;
+      user.save().then(response.redirect('http://119.18.120.225:3000/'))
+    })
   }
-  
+
   if (request.query.pageId) {
     pid = request.query.pageId;
     var size;
@@ -112,37 +111,45 @@ router.post('', function (request, response) {
       freeflag: "0",
       verification: 0
     })
-
-    user.save(function (error, data) {
-      if (error) {
-        console.log(error);
-        return response.send(Obj)
-      } else {
-        Obj.flag = "success"
-        let transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-            user: key.user,  // gmail 계정 아이디를 입력
-            pass: key.pass   // gmail 계정의 비밀번호를 입력
-          }
-        });
-        let mailOptions = {
-          from: key.user,    // 발송 메일 주소 (위에서 작성한 gmail 계정 아이디)
-          to: post.userId,                     // 수신 메일 주소
-          subject: '[tikitaka] 본인 확인 메일입니다.',   // 제목
-          html: '<p>아래의 링크를 클릭해주세요 !</p>' +
-            "<a href=" + 'http://' + key.ip + ':4000/user?useroid=' + data._id + '&verification=1' + ">인증하기</a>"
-        };
-
-        transporter.sendMail(mailOptions, function (error, info) {
+    userDb.findOne({ userId: post.userId }, function (err, data) {
+      console.log(data)
+      if (data == null) {
+        user.save(function (error, data) {
           if (error) {
             console.log(error);
-          }
-          else {
-            console.log('Email sent: ' + info.response);
             return response.send(Obj)
+          } else {
+            Obj.flag = "success"
+            let transporter = nodemailer.createTransport({
+              service: 'gmail',
+              auth: {
+                user: key.user,  // gmail 계정 아이디를 입력
+                pass: key.pass   // gmail 계정의 비밀번호를 입력
+              }
+            });
+            let mailOptions = {
+              from: key.user,    // 발송 메일 주소 (위에서 작성한 gmail 계정 아이디)
+              to: post.userId,                     // 수신 메일 주소
+              subject: '[tikitaka] 본인 확인 메일입니다.',   // 제목
+              html: '<p>아래의 링크를 클릭해주세요 !</p>' +
+                "<a href=" + 'http://' + key.ip + ':4000/user?useroid=' + data._id + '&verification=1' + ">인증하기</a>"
+            };
+
+            transporter.sendMail(mailOptions, function (error, info) {
+              if (error) {
+                console.log(error);
+              }
+              else {
+                console.log('Email sent: ' + info.response);
+                return response.send(Obj)
+              }
+            });
           }
-        });
+        })
+      }
+      else {
+        Obj.message = '이미 가입된 계정입니다.'
+        return response.send(Obj);
       }
     })
   });
@@ -193,7 +200,72 @@ router.put('/update_pass', function (request, response) {
     })
   });
 });
+function randomString() {
+  var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz!@%^*~";
+  var string_length = 9;
+  var randomstring = '';
+  for (var i = 0; i < string_length; i++) {
+      var rnum = Math.floor(Math.random() * chars.length);
+      randomstring += chars.substring(rnum, rnum + 1);
+  }
+  return randomstring;
+}
 
+router.put('/find_pass', function (request, response) {
+
+  var post = request.body;
+  var id = post.userId;
+  var pwd = randomString();
+  bcrypt.hash(pwd, 10, function (err, hash) {
+      userDb.findOne({ userId: id }, function (error, user) {
+          user.password = hash;
+          user.save(function (error, data) {
+              if (error) {
+                  console.log(error);
+                  console.log('unSaved!')
+                  return response.json({
+                      flag: "fail",
+                      message: "비밀번호 변경에 실패했습니다."
+                  });
+              } else {
+                  console.log('Saved!')
+
+                  let transporter = nodemailer.createTransport({
+                      service: 'gmail',
+                      auth: {
+                          user: key.user,  // gmail 계정 아이디를 입력
+                          pass: key.pass   // gmail 계정의 비밀번호를 입력
+                      }
+                  });
+                  let mailOptions = {
+                      from: key.user,    // 발송 메일 주소 (위에서 작성한 gmail 계정 아이디)
+                      to: post.userId,                     // 수신 메일 주소
+                      subject: '[tikitaka] 임시 비밀번호 발급 메일입니다.',   // 제목
+                      html: '<p> 비밀번호는 아래와 같습니다. 확인 후 변경 바랍니다.</p>' + pwd
+
+                  };
+
+                  transporter.sendMail(mailOptions, function (error, info) {
+                      if (error) {
+                          console.log(error);
+                          return response.json({
+                              flag: "fail",
+                              message: "비밀번호가 성공적으로 변경되었습니다. 메일 전송에 실패했습니다."
+                          });
+                      }
+                      else {
+                          return response.json({
+                              flag: "success",
+                              message: "비밀번호가 성공적으로 변경되었습니다. 메일 전송에 성공했습니다."
+                          });
+                      }
+                  });
+
+              }
+          })
+      })
+  });
+});
 
 router.put('/:uid', function (request, response) {
 
@@ -213,7 +285,7 @@ router.put('/:uid', function (request, response) {
     if (error)
       return response.send(Obj)
     else {
-  
+
       if (user) {
         if (post.userId)
           user.userId = post.userId
@@ -302,7 +374,7 @@ router.put('/:uid', function (request, response) {
               return response.send(Obj)
             } else {
               console.log(data);
-              
+
               Obj.flag = "success"
               return response.send(Obj)
             }
@@ -345,7 +417,7 @@ router.get('/:uid', function (request, response) {
   var freeflag = "0";
   if (request.query.freeflag)
     freeflag = request.query.freeflag;
-    
+
   userDb.findOne({ _id: request.params.uid, freeflag: freeflag }, function (error, user) {
     if (error)
       return response.send(user)
@@ -353,7 +425,7 @@ router.get('/:uid', function (request, response) {
       Obj.flag = "success"
       Obj.user = user
       console.log(Obj);
-      
+
       return response.send(Obj)
     }
   });
