@@ -11,6 +11,23 @@ var countDb = require('../lib/countdb')
 var shortid = require('shortid');
 var mongoose = require('mongoose')
 
+router.get("/followProject/:oid", (req, res) => {
+  const useroid = req.params.oid;
+  projectDb.find({ _id: req.user.followProList }, (err, users) => {
+    if (err) return res.status(500).json({ error: "database failure" });
+
+    res.json({ flag: "success", users });
+  });
+});
+
+router.get("/myProject/:oid", (req, res) => {
+  const useroid = req.params.oid;
+  projectDb.find({ _id: req.user.proList }, (err, users) => {
+    if (err) return res.status(500).json({ error: "database failure" });
+
+    res.json({ flag: "success", users });
+  });
+});
 router.get('', async function (request, response, next) {
   var pid;
   var Obj = new Object();

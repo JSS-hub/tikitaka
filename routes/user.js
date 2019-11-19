@@ -12,6 +12,15 @@ var bcrypt = require('bcrypt');
 var nodemailer = require('nodemailer');
 var key = require('../lib/.my_key')
 
+router.get("/followUser/:oid", (req, res) => {
+  const useroid = req.params.oid;
+  console.log(useroid);
+  userDb.find({ _id: req.user.followUserList }, (err, users) => {
+    if (err) return res.status(500).json({ error: "database failure" });
+
+    res.json({ flag: "success", users });
+  });
+});
 /**
  * 프리랜서 목록 불러옴
  * Method: GET
