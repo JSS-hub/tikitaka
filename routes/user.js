@@ -205,8 +205,8 @@ function randomString() {
   var string_length = 9;
   var randomstring = '';
   for (var i = 0; i < string_length; i++) {
-      var rnum = Math.floor(Math.random() * chars.length);
-      randomstring += chars.substring(rnum, rnum + 1);
+    var rnum = Math.floor(Math.random() * chars.length);
+    randomstring += chars.substring(rnum, rnum + 1);
   }
   return randomstring;
 }
@@ -215,55 +215,70 @@ router.put('/find_pass', function (request, response) {
 
   var post = request.body;
   var id = post.userId;
+  console.log(post);
+  
   var pwd = randomString();
   bcrypt.hash(pwd, 10, function (err, hash) {
-      userDb.findOne({ userId: id }, function (error, user) {
-          user.password = hash;
-          user.save(function (error, data) {
-              if (error) {
-                  console.log(error);
-                  console.log('unSaved!')
-                  return response.json({
-                      flag: "fail",
-                      message: "비밀번호 변경에 실패했습니다."
-                  });
-              } else {
-                  console.log('Saved!')
+    userDb.findOne({ userId: id }, function (error, user) {
+      console.log(user);
+      
+      if (user) {
+        user.password = hash;
+        user.save(function (error, data) {
+          if (error) {
+            console.log(error);
+            console.log('unSaved!')
+            return response.json({
+              flag: "fail",
+              message: "비밀번호 변경에 실패했습니다."
+            });
+          } else {
+            console.log('Saved!')
 
-                  let transporter = nodemailer.createTransport({
-                      service: 'gmail',
-                      auth: {
-                          user: key.user,  // gmail 계정 아이디를 입력
-                          pass: key.pass   // gmail 계정의 비밀번호를 입력
-                      }
-                  });
-                  let mailOptions = {
-                      from: key.user,    // 발송 메일 주소 (위에서 작성한 gmail 계정 아이디)
-                      to: post.userId,                     // 수신 메일 주소
-                      subject: '[tikitaka] 임시 비밀번호 발급 메일입니다.',   // 제목
-                      html: '<p> 비밀번호는 아래와 같습니다. 확인 후 변경 바랍니다.</p>' + pwd
-
-                  };
-
-                  transporter.sendMail(mailOptions, function (error, info) {
-                      if (error) {
-                          console.log(error);
-                          return response.json({
-                              flag: "fail",
-                              message: "비밀번호가 성공적으로 변경되었습니다. 메일 전송에 실패했습니다."
-                          });
-                      }
-                      else {
-                          return response.json({
-                              flag: "success",
-                              message: "비밀번호가 성공적으로 변경되었습니다. 메일 전송에 성공했습니다."
-                          });
-                      }
-                  });
-
+            let transporter = nodemailer.createTransport({
+              service: 'gmail',
+              auth: {
+                user: key.user,  // gmail 계정 아이디를 입력
+                pass: key.pass   // gmail 계정의 비밀번호를 입력
               }
-          })
-      })
+            });
+            let mailOptions = {
+              from: key.user,    // 발송 메일 주소 (위에서 작성한 gmail 계정 아이디)
+              to: post.userId,                     // 수신 메일 주소
+              subject: '[tikitaka] 임시 비밀번호 발급 메일입니다.',   // 제목
+              html: '<p> 비밀번호는 아래와 같습니다. 확인 후 변경 바랍니다.</p>' + pwd
+
+            };
+
+            transporter.sendMail(mailOptions, function (error, info) {
+              if (error) {
+                console.log(error);
+                return response.json({
+                  flag: "fail",
+                  message: "비밀번호가 성공적으로 변경되었습니다. 메일 전송에 실패했습니다."
+                });
+              }
+              else {
+                return response.json({
+                  flag: "success",
+                  message: "비밀번호가 성공적으로 변경되었습니다. 메일 전송에 성공했습니다."
+                });
+              }
+            });
+
+          }
+        })
+
+      }
+      else {
+        console.log('here');
+        
+        return response.json({
+          flag: "fail",
+          message: "존재하지 않는 이메일입니다."
+        });
+      }
+    })
   });
 });
 
