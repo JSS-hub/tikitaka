@@ -73,11 +73,14 @@ router.get('', async function (request, response, next) {
     const cat = request.query.cat;
     const { text } = request.query;
     var startProId = ((Number(pid) - 1) * Number(size))
+    let date = new Date();
+    date.setHours(date.getHours() + 9);
 
     if (text != 'null' && text != 'undefined') {
       var query = new RegExp(text);
+      
       //dueDate: { '$gte' : Date.now()}
-      projectDb.find({ dueDate: { '$gte': Date.now() } }, async function (error, project) { // test때는 $lt 아닐때는 gte
+      projectDb.find({ dueDate: { '$lt': date } }, async function (error, project) { // test때는 $lt 아닐때는 gte
         if (error) {
           console.log(error)
         }
@@ -85,7 +88,7 @@ router.get('', async function (request, response, next) {
           if (project) {
             Obj.flag = "success"
             Obj.project = project
-            const counts = await projectDb.find({ dueDate: { '$gte': Date.now() } }).where(cat).regex(query).countDocuments().exec()
+            const counts = await projectDb.find({ dueDate: { '$lt': date } }).where(cat).regex(query).countDocuments().exec()
             Obj.lastPage = Math.ceil(counts / size)
             return response.send(Obj)
           }
@@ -99,7 +102,7 @@ router.get('', async function (request, response, next) {
         .where(cat).regex(query)
     }
     else {
-      projectDb.find({ dueDate: { '$gte': Date.now() } }, async function (error, project) { // test때는 $lt 아닐때는 gte
+      projectDb.find({ dueDate: { '$lt': date } }, async function (error, project) { // test때는 $lt 아닐때는 gte
         if (error) {
           console.log(error)
         }
@@ -107,7 +110,7 @@ router.get('', async function (request, response, next) {
           if (project) {
             Obj.flag = "success"
             Obj.project = project
-            const counts = await projectDb.find({ dueDate: { '$gte': Date.now() } }).countDocuments().exec()
+            const counts = await projectDb.find({ dueDate: { '$lt': date } }).countDocuments().exec()
             Obj.lastPage = Math.ceil(counts / size)
             return response.send(Obj)
           }
@@ -163,7 +166,13 @@ router.post('', function (request, response) {
       console.log(error);
     } else {
       let userOid = request.user._id;
-
+      let date = new Date(post.dueDate);
+      
+      date.setHours(date.getHours()+9)
+      date.setMinutes(59)
+      date.setSeconds(59)
+      date.setHours(32)
+      
       var project = new projectDb({
         id: request.user.id,
         projectId: data.count,
@@ -177,7 +186,7 @@ router.post('', function (request, response) {
         period: post.period,
         description: post.description,
         maxPeople: post.maxPeople,
-        dueDate: post.dueDate,
+        dueDate: date,
         categoryList: post.categoryList
       })
 
