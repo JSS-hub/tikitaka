@@ -14,7 +14,7 @@ var key = require('../lib/.my_key')
 
 router.get("/followUser/:oid", (req, res) => {
   const useroid = req.params.oid;
-  console.log(useroid);
+  // console.log(useroid);
   userDb.find({ _id: req.user.followUserList }, (err, users) => {
     if (err) return res.status(500).json({ error: "database failure" });
 
@@ -121,7 +121,7 @@ router.post('', function (request, response) {
       verification: 0
     })
     userDb.findOne({ userId: post.userId }, function (err, data) {
-      console.log(data)
+      // console.log(data)
       if (data == null) {
         user.save(function (error, data) {
           if (error) {
@@ -129,6 +129,7 @@ router.post('', function (request, response) {
             return response.send(Obj)
           } else {
             Obj.flag = "success"
+
             let transporter = nodemailer.createTransport({
               service: 'gmail',
               auth: {
@@ -146,10 +147,16 @@ router.post('', function (request, response) {
 
             transporter.sendMail(mailOptions, function (error, info) {
               if (error) {
-                console.log(error);
+                Obj.message = '이메일 형식이 잘못 되었습니다.'
+                userDb.deleteOne({ userId: post.userId }, function (error,data) {
+                  console.log(error);
+                  return response.send(Obj);                
+                })
+                
+                
               }
               else {
-                console.log('Email sent: ' + info.response);
+                // console.log('Email sent: ' + info.response);
                 return response.send(Obj)
               }
             });
@@ -224,12 +231,12 @@ router.put('/find_pass', function (request, response) {
 
   var post = request.body;
   var id = post.userId;
-  console.log(post);
+  // console.log(post);
   
   var pwd = randomString();
   bcrypt.hash(pwd, 10, function (err, hash) {
     userDb.findOne({ userId: id }, function (error, user) {
-      console.log(user);
+      // console.log(user);
       
       if (user) {
         user.password = hash;
@@ -280,7 +287,7 @@ router.put('/find_pass', function (request, response) {
 
       }
       else {
-        console.log('here');
+        // console.log('here');
         
         return response.json({
           flag: "fail",
@@ -397,7 +404,7 @@ router.put('/:uid', function (request, response) {
             if (error) {
               return response.send(Obj)
             } else {
-              console.log(data);
+              // console.log(data);
 
               Obj.flag = "success"
               return response.send(Obj)
@@ -424,11 +431,11 @@ router.delete('/:uid', function (request, response) {
 
 
   userDb.deleteOne({ _id: request.params.uid }, function (error, output) {
-    console.log('--- Delete ---');
+    // console.log('--- Delete ---');
     if (error) {
       return response.send(Obj)
     }
-    console.log('--- deleted ---');
+    // console.log('--- deleted ---');
     Obj.flag = "success"
     return response.send(Obj)
   })
@@ -438,17 +445,14 @@ router.get('/:uid', function (request, response) {
 
   var Obj = new Object();
   Obj.flag = "fail"
-  var freeflag = "0";
-  if (request.query.freeflag)
-    freeflag = request.query.freeflag;
 
-  userDb.findOne({ _id: request.params.uid, freeflag: freeflag }, function (error, user) {
+  userDb.findOne({ _id: request.params.uid }, function (error, user) {
     if (error)
       return response.send(user)
     else {
       Obj.flag = "success"
       Obj.user = user
-      console.log(Obj);
+      // console.log(Obj);
 
       return response.send(Obj)
     }

@@ -26,7 +26,7 @@ router.get('', function(request,response){
     
     var startProId = ((Number(pid) -1) * Number(size))
 
-    console.log(request.user.followUserList)
+    // console.log(request.user.followUserList)
 
       timelineDb.find({ $or : [{userOID : request.user.followUserList},{projectOID : request.user.followProList}]},function(error,timeline){
         obj.timeline = timeline

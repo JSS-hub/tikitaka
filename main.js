@@ -34,19 +34,21 @@ var passport = require('./lib/passport')(app);
 
 app.get('/main', function (request, response) {
   var obj = new Object();
-  obj.user = request.user;
-  obj.logged =!!request.session.logged 
-  if (request.user) {
-    timelineDb.find({ userOID: request.user.followUserList }, function (error, timeline) {
-      obj.timeline = timeline
+    if(request.session.isAPI)
+      obj.isAPI = request.session.isAPI
+    obj.user = request.user;
+    obj.logged =!!request.session.logged 
+    if (request.user) {
+      timelineDb.find({ userOID: request.user.followUserList }, function (error, timeline) {
+        obj.timeline = timeline
+        return response.send(obj);
+
+      })
+    }else{
+
       return response.send(obj);
-
-    })
-  }else{
-
-    return response.send(obj);
-  }
-
+    }
+  
 });
 
 
@@ -99,7 +101,7 @@ const uploader = multer({
     filename(req, file, cb) {
       const ext = path.extname(file.originalname);
       req.user.userId
-      console.log('테스트 +    ' + ext)
+      // console.log('테스트 +    ' + ext)
       //cb(null, path.basename(file.originalname, ext) + new Date().valueOf() + ext);
       cb(null, req.user.userId+ext);
     }
@@ -110,15 +112,32 @@ const uploader = multer({
 
 app.post('/images', uploader.single('img'), function (req, res, next) {
   console.log('test');
-  console.log(req.file);
+  // console.log(req.file);
   res.json(req.body);
 })
 
 app.get('/fail', function (req, res) {
   let feedback = req.flash()
-  res.json({
+  res.send({
     message:feedback.error
-  })
+  }) 
+})
+app.get('/fail2', function (request, response) {
+
+  let feedback = request.flash()
+  
+  let inner = `<!DOCTYPE html>
+    <html>
+      <head> 
+        <script>
+            alert('${feedback.error}');
+            window.location.href='http://119.18.120.225:3000/login'
+        </script>
+      </head>
+      <body>
+      </body>
+    </html>`
+  response.send(inner)
 })
 
 

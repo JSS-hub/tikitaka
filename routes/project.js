@@ -12,15 +12,18 @@ var shortid = require('shortid');
 var mongoose = require('mongoose')
 
 router.get("/followProject/:oid", (req, res) => {
+  console.log('followProject');
+  
   const useroid = req.params.oid;
   projectDb.find({ _id: req.user.followProList }, (err, users) => {
     if (err) return res.status(500).json({ error: "database failure" });
-
     res.json({ flag: "success", users });
   });
 });
 
 router.get("/myProject/:oid", (req, res) => {
+  console.log('myProject');
+  
   const useroid = req.params.oid;
   projectDb.find({ _id: req.user.proList }, (err, users) => {
     if (err) return res.status(500).json({ error: "database failure" });
@@ -29,6 +32,8 @@ router.get("/myProject/:oid", (req, res) => {
   });
 });
 router.get('', async function (request, response, next) {
+  console.log('get.project');
+  
   var pid;
   var Obj = new Object();
   Obj.flag = "fail"
@@ -104,12 +109,6 @@ router.get('', async function (request, response, next) {
             Obj.project = project
             const counts = await projectDb.find({ dueDate: { '$gte': Date.now() } }).countDocuments().exec()
             Obj.lastPage = Math.ceil(counts / size)
-            console.log('000000000000000000000000000');
-
-            console.log(counts);
-
-            console.log(Obj.lastPage);
-
             return response.send(Obj)
           }
           else {
@@ -188,8 +187,8 @@ router.post('', function (request, response) {
           console.log('unSaved!')
           return response.send(Obj)
         } else {
-          console.log(project)
-          console.log('Saved@!')
+          // console.log(project)
+          console.log('post.proejct.Saved!')
 
         }
       })
@@ -217,7 +216,7 @@ router.post('', function (request, response) {
             console.log(error);
             return response.send(Obj)
           } else {
-            console.log(dat)
+            // console.log(dat)
           }
         })
       })
@@ -233,8 +232,6 @@ router.post('', function (request, response) {
 });
 
 router.get('/:projectOId', function (request, response) {
-  console.log('project post');
-
   var Obj = new Object();
   Obj.flag = "fail"
 
@@ -244,7 +241,7 @@ router.get('/:projectOId', function (request, response) {
 
   //var post = request.body;
   var OId = request.params.projectOId;
-  console.log(OId);
+  // console.log(OId);
 
   projectDb.findOne({ _id: OId }, function (error, project) {
 
@@ -281,7 +278,7 @@ router.put('/:projectOId', function (request, response) {
       if (Number(request.query.flag) == 1) // 신청
       {
         userDb.findOne({ id: request.session.passport.user }, function (error, user) {
-          console.log('enter')
+          // console.log('enter')
           let chk = project.candiList.find(i => {
             return user._id.equals(i)
           })
@@ -361,8 +358,8 @@ router.put('/:projectOId', function (request, response) {
         project.save(function (error, data) {
           if (error) {
             console.log(error);
+            // console.log('unSaved!')
             return response.send(Obj)
-            console.log('unSaved!')
           } else {
             console.log('Saved!')
             Obj.flag = "success"
